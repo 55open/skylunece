@@ -8,6 +8,7 @@ public interface BaseDao<T> {
     
     
     
+    
     public void delete(T t);
     
     public void update(T t);
