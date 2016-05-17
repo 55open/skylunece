@@ -14,6 +14,6 @@ public interface BaseDao<T> {
 
     public List<T> find(String sql, Object[] param, Integer pageNo, Integer row);
     
-    
+    //你特么逗我呢
 
 }
