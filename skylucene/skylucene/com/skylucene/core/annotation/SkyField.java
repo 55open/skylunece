@@ -9,9 +9,20 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD,ElementType.METHOD})
 public @interface SkyField {
 
-    
+    /**
+     * 索引
+     * @return
+     */
     Index	index()		default Index.YES;
+    /**
+     * 分词
+     * @return
+     */
     Analyze	analyze()	default Analyze.NO;
+    /**
+     * 存储
+     * @return
+     */
     Store	store()		default Store.YES;
     
     public enum Index{

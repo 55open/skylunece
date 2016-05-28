@@ -43,8 +43,8 @@ import com.skylucene.core.model.FieldType;
 public class LuceneSession<T > { 
     private File	index_file	= null;
     private String	index_path_str	= null;
-    private IndexWriter indexWriter	= null;
-    private IndexReader indexReader	= null;
+    //private IndexWriter indexWriter	= null;
+    //private IndexReader indexReader	= null;
     private String	id_fiel_name	= null;
     private String	table_name	= null;
     private Class<?>	table_class	= null;
@@ -62,7 +62,7 @@ public class LuceneSession<T > {
 	    throw new Exception("This isn't a document model.");
 	}
 	table_class=modelClazz;
-	Method[] modelMethod= modelClazz.getDeclaredMethods(); 
+	Method[] modelMethod= modelClazz.getDeclaredMethods();
 	
 	for (Method method : modelMethod) {
 	    FieldInfo fieldInfo = new FieldInfo();
@@ -167,9 +167,10 @@ public class LuceneSession<T > {
 
 
     private synchronized IndexWriter openIndexWriter() throws Exception { 
-	if(null!=indexWriter){
+	IndexWriter indexWriter=null; 
+	/*if(null!=indexWriter){
 	    return indexWriter;
-	}
+	}*/
 	IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LUCENE_36,analyzer);
 	//索引 设置为追加或者覆盖
 	indexWriterConfig.setOpenMode(OpenMode.CREATE_OR_APPEND);
@@ -182,7 +183,7 @@ public class LuceneSession<T > {
 	return indexWriter;
     }
     
-    public synchronized void indexWriterClose(){
+    public synchronized void indexWriterClose(IndexWriter indexWriter){
 	if(null!=indexWriter){
 	    try {
 		indexWriter.close();
@@ -194,15 +195,16 @@ public class LuceneSession<T > {
     }
 
     
-    private synchronized IndexReader openIndexReader()throws Exception {
-	if(null!=indexReader){
+    public synchronized IndexReader openIndexReader()throws Exception {
+	IndexReader indexReader =null;
+	/*if(null!=indexReader){
 	    return indexReader;
-	}
+	}*/
 	indexReader = IndexReader.open(FSDirectory.open(index_file));
 	return indexReader;
     }
     
-    private synchronized void indexReaderClose(){
+    public synchronized void indexReaderClose(IndexReader indexReader){
 	if(null!=indexReader){
 	    try {
 		indexReader.close();
@@ -318,7 +320,7 @@ public class LuceneSession<T > {
 	} finally {
 	    if(isClose && null!=writer){
 		try {
-		    indexWriterClose();
+		    indexWriterClose(writer);
 		}  catch ( Exception e) {
 		    e.printStackTrace();
 		}
@@ -376,7 +378,7 @@ public class LuceneSession<T > {
 	}finally {
 	    if(isClose && null!=writer){
 		try {
-		    indexWriterClose();
+		    indexWriterClose(writer);
 		}  catch ( Exception e) {
 		    e.printStackTrace();
 		}
@@ -406,7 +408,7 @@ public class LuceneSession<T > {
 	}finally {
 	    if(isClose && null!=writer){
 		try {
-		    indexWriterClose();
+		    indexWriterClose(writer);
 		}  catch ( Exception e) {
 		    e.printStackTrace();
 		}
@@ -473,9 +475,9 @@ public class LuceneSession<T > {
     
     @SuppressWarnings("unchecked")
     public List<T> find(BooleanQuery rootQuery,Sort sort,Integer pageNo,Integer row){
-	
+	IndexReader reader=null;
 	try {
-	    IndexReader reader = openIndexReader();
+	    reader = openIndexReader();
 	    IndexSearcher searcher = new IndexSearcher(reader);
 	    /*for (int i = 0; i < param.length; i++) {
 		 TermQuery termQuery = new TermQuery(new Term(names[i], param[i].toString()));
@@ -536,6 +538,14 @@ public class LuceneSession<T > {
 	    return objs;
 	} catch (Exception e) { 
 	    e.printStackTrace();
+	}finally{
+	    if( null!=reader){
+		try {
+		    indexReaderClose(reader);
+		}  catch ( Exception e) {
+		    e.printStackTrace();
+		}
+	    }
 	}
 	return null; 
     }
