@@ -157,6 +157,7 @@ public class LuceneSession<T > {
 	    if (!index_file.exists()){
 		index_file.mkdirs();
 	    }
+	    indexWriterClose(openIndexWriter());
 	}
 	if(null==analyzer){
 	    analyzer = (Analyzer) Config.ANALYZER_IMPL_CLAZZ.newInstance();
