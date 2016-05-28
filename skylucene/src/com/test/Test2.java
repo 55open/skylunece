@@ -102,5 +102,14 @@ public class Test2 {
     //解决思路 while 语句
     
     
+    @Test
+    public void test4(){
+	try {
+	    LuceneSession<User>  userDao = (LuceneSession<User>) LuceneSessionFactory.getInstance().getLuceneWriter(User.class);
+	} catch (Exception e) { 
+	    e.printStackTrace();
+	}
+	
+    }
     
 }
