@@ -37,11 +37,11 @@ public class Test2 {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}finally{
-	    try {
+	  /*  try {
 		userDao.indexWriterClose();
 	    } catch (Exception e) {
 		e.printStackTrace();
-	    }
+	    }*/
 	}
     } 
     
