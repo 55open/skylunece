@@ -14,7 +14,7 @@ public class Config {
 	    Map<String,String> map = PropertiesUtil.getResProp("skylucene.properties");
 	    INDEX_ROOT_PATH = map.get("index.root.path");
 	    ANALYZER_IMPL_CLAZZ =Class.forName(map.get("analyzer.impl.clazz")); 
-	    LUCENE_SQL_HANDLER_IMPL_CLAZZ =Class.forName(map.get("lucene.sql.handler.impl.clazz"));
+	    LUCENE_SQL_HANDLER_IMPL_CLAZZ =Class.forName(map.get("lucene.sql.handler.impl.clazz")); 
 	} catch (ClassNotFoundException e) { 
 	    e.printStackTrace();
 	}
