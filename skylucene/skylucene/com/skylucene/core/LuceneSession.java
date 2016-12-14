@@ -289,6 +289,8 @@ public class LuceneSession<T > {
 		case LONG:
 		    field = new NumericField(methodName,fieldStore, fieldIndexBool).setLongValue(Long.valueOf(fielValue));
 		    break;
+		default:
+		    break;
 		} 
 	    }else{
 		field = new Field(methodName,fielValue, fieldStore, fieldIndex);
@@ -364,7 +366,9 @@ public class LuceneSession<T > {
 			    Double doubleValue = Double.valueOf(fieldInfo.getFieldReadMethod().invoke(model).toString());
 			    termQuery = NumericRangeQuery.newDoubleRange(id_fiel_name, doubleValue ,doubleValue, true, true);
 			    writer.deleteDocuments(termQuery);
-			    break;  
+			    break; 
+			 default:
+			     break;
 		    }  
 	     }else{
 		    Term term = new Term(id_fiel_name,fieldInfo.getFieldReadMethod().invoke(model).toString());
