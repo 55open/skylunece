@@ -1,7 +1,11 @@
 package com.test;
 
 import java.util.List;
+
+import org.apache.lucene.index.IndexReader;
 import org.junit.Test;
+
+import com.alibaba.fastjson.JSON;
 import com.model.User;
 import com.skylucene.core.LuceneSession;
 import com.skylucene.core.LuceneSessionFactory;
@@ -14,34 +18,35 @@ public class Test2 {
     @Test
     public void test1(){
 	LuceneSession<User>  userDao = (LuceneSession<User>) LuceneSessionFactory.getInstance().getLuceneWriter(User.class);
+	 
 	try {
-	    
 	    long c = System.currentTimeMillis();
-	    for (long i = 1000l; i < 1400; i++) {
+	    
+	    for (long i = 1000l; i < 5400; i++) {
 		 User u = new User();
 		 u.setUsername("我饿偶然看撒地方");
 		 u.setPassword("我饿偶然看撒地方");
 		 u.setId(i);
 		 u.setIsDelete(1);
-		 userDao.delete(u,false);
-		 //userDao.save(u,false);
-	    } 
+		 // userDao.delete(u,false);
+		 userDao.save(u,false);
+	    }  
+	    userDao.indexWriterClose();
+	     
 	    
 	    /*
 	    User u = new User();
 	    u.setUsername("我饿偶然看撒地方");
 	    u.setPassword("我饿偶然看撒地方为偶然卡死地方啊适当放宽撒娇东风科技撒旦fasdfasdfasdf");
 	    u.setId(7000l);
-	    userDao.indexWriterClose();*/
+	    userDao.indexWriterClose();
+	    
+	    */
 	    System.out.println(System.currentTimeMillis()-c);
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}finally{
-	  /*  try {
-		userDao.indexWriterClose();
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }*/
+	  
 	}
     } 
     
@@ -106,6 +111,8 @@ public class Test2 {
     public void test4(){
 	try {
 	    LuceneSession<User>  userDao = (LuceneSession<User>) LuceneSessionFactory.getInstance().getLuceneWriter(User.class);
+	    List<User > users = userDao.find("FROM User WHERE id>1500 AND id<1600", new Object[]{},1,10);
+	    System.out.println(JSON.toJSONString(users));
 	} catch (Exception e) { 
 	    e.printStackTrace();
 	}

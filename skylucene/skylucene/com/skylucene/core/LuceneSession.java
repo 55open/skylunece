@@ -14,6 +14,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.document.NumericField;
+import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -43,8 +44,8 @@ import com.skylucene.core.model.FieldType;
 public class LuceneSession<T > { 
     private File	index_file	= null;
     private String	index_path_str	= null;
-    //private IndexWriter indexWriter	= null;
-    //private IndexReader indexReader	= null;
+    private IndexWriter indexWriter	= null;
+    private IndexReader indexReader	= null;
     private String	id_fiel_name	= null;
     private String	table_name	= null;
     private Class<?>	table_class	= null;
@@ -62,7 +63,7 @@ public class LuceneSession<T > {
 	    throw new Exception("This isn't a document model.");
 	}
 	table_class=modelClazz;
-	Method[] modelMethod= modelClazz.getDeclaredMethods();
+	Method[] modelMethod= modelClazz.getDeclaredMethods(); 
 	
 	for (Method method : modelMethod) {
 	    FieldInfo fieldInfo = new FieldInfo();
@@ -157,7 +158,6 @@ public class LuceneSession<T > {
 	    if (!index_file.exists()){
 		index_file.mkdirs();
 	    }
-	    indexWriterClose(openIndexWriter());
 	}
 	if(null==analyzer){
 	    analyzer = (Analyzer) Config.ANALYZER_IMPL_CLAZZ.newInstance();
@@ -168,13 +168,12 @@ public class LuceneSession<T > {
 
 
     private synchronized IndexWriter openIndexWriter() throws Exception { 
-	IndexWriter indexWriter=null; 
-	/*if(null!=indexWriter){
+	if(null!=indexWriter){
 	    return indexWriter;
-	}*/
+	}
 	IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LUCENE_36,analyzer);
 	//索引 设置为追加或者覆盖
-	indexWriterConfig.setOpenMode(OpenMode.CREATE_OR_APPEND);
+	indexWriterConfig.setOpenMode(OpenMode.CREATE);
 	LogMergePolicy mergePolicy = new LogByteSizeMergePolicy();
 	mergePolicy.setMergeFactor(5);//设置合并文档的数量
 	mergePolicy.setUseCompoundFile(true);
@@ -184,7 +183,7 @@ public class LuceneSession<T > {
 	return indexWriter;
     }
     
-    public synchronized void indexWriterClose(IndexWriter indexWriter){
+    public synchronized void indexWriterClose(){
 	if(null!=indexWriter){
 	    try {
 		indexWriter.close();
@@ -196,16 +195,20 @@ public class LuceneSession<T > {
     }
 
     
-    public synchronized IndexReader openIndexReader()throws Exception {
-	IndexReader indexReader =null;
-	/*if(null!=indexReader){
+    private synchronized IndexReader openIndexReader()throws Exception {
+	if(null!=indexReader){
 	    return indexReader;
-	}*/
-	indexReader = IndexReader.open(FSDirectory.open(index_file));
+	}
+	try{
+	    indexReader = IndexReader.open(FSDirectory.open(index_file));
+	}catch(IndexNotFoundException e){
+	    System.out.println(e.getMessage());
+	}
+	
 	return indexReader;
     }
     
-    public synchronized void indexReaderClose(IndexReader indexReader){
+    private synchronized void indexReaderClose(){
 	if(null!=indexReader){
 	    try {
 		indexReader.close();
@@ -289,8 +292,6 @@ public class LuceneSession<T > {
 		case LONG:
 		    field = new NumericField(methodName,fieldStore, fieldIndexBool).setLongValue(Long.valueOf(fielValue));
 		    break;
-		default:
-		    break;
 		} 
 	    }else{
 		field = new Field(methodName,fielValue, fieldStore, fieldIndex);
@@ -323,7 +324,7 @@ public class LuceneSession<T > {
 	} finally {
 	    if(isClose && null!=writer){
 		try {
-		    indexWriterClose(writer);
+		    indexWriterClose();
 		}  catch ( Exception e) {
 		    e.printStackTrace();
 		}
@@ -366,9 +367,10 @@ public class LuceneSession<T > {
 			    Double doubleValue = Double.valueOf(fieldInfo.getFieldReadMethod().invoke(model).toString());
 			    termQuery = NumericRangeQuery.newDoubleRange(id_fiel_name, doubleValue ,doubleValue, true, true);
 			    writer.deleteDocuments(termQuery);
-			    break; 
-			 default:
-			     break;
+			    break;
+			case STRING:
+			    
+			    break;
 		    }  
 	     }else{
 		    Term term = new Term(id_fiel_name,fieldInfo.getFieldReadMethod().invoke(model).toString());
@@ -383,7 +385,7 @@ public class LuceneSession<T > {
 	}finally {
 	    if(isClose && null!=writer){
 		try {
-		    indexWriterClose(writer);
+		    indexWriterClose();
 		}  catch ( Exception e) {
 		    e.printStackTrace();
 		}
@@ -413,7 +415,7 @@ public class LuceneSession<T > {
 	}finally {
 	    if(isClose && null!=writer){
 		try {
-		    indexWriterClose(writer);
+		    indexWriterClose();
 		}  catch ( Exception e) {
 		    e.printStackTrace();
 		}
@@ -480,10 +482,14 @@ public class LuceneSession<T > {
     
     @SuppressWarnings("unchecked")
     public List<T> find(BooleanQuery rootQuery,Sort sort,Integer pageNo,Integer row){
-	IndexReader reader=null;
+	
 	try {
-	    reader = openIndexReader();
+	    IndexReader reader = openIndexReader();
+	    if(null ==reader){
+		return null;
+	    }
 	    IndexSearcher searcher = new IndexSearcher(reader);
+	    
 	    /*for (int i = 0; i < param.length; i++) {
 		 TermQuery termQuery = new TermQuery(new Term(names[i], param[i].toString()));
 		 rootQuery.add(termQuery, org.apache.lucene.search.BooleanClause.Occur.MUST); 
@@ -543,14 +549,6 @@ public class LuceneSession<T > {
 	    return objs;
 	} catch (Exception e) { 
 	    e.printStackTrace();
-	}finally{
-	    if( null!=reader){
-		try {
-		    indexReaderClose(reader);
-		}  catch ( Exception e) {
-		    e.printStackTrace();
-		}
-	    }
 	}
 	return null; 
     }
